@@ -1,0 +1,63 @@
+[server]
+bind = "127.0.0.1:8787"
+database = "data/sanctum.db"
+
+[router]
+complexity_threshold = 0.55
+max_parallel = 3
+fast_model = "mock-fast"
+critic_model = "mock-critic"
+verifier_model = "mock-verifier"
+synthesizer_model = "mock-synth"
+deliberation_models = ["mock-a", "mock-b", "mock-c"]
+
+[[models]]
+name = "mock-fast"
+kind = "mock"
+model = "fast"
+enabled = true
+
+[[models]]
+name = "mock-a"
+kind = "mock"
+model = "analysis-a"
+enabled = true
+
+[[models]]
+name = "mock-b"
+kind = "mock"
+model = "analysis-b"
+enabled = true
+
+[[models]]
+name = "mock-c"
+kind = "mock"
+model = "analysis-c"
+enabled = true
+
+[[models]]
+name = "mock-critic"
+kind = "mock"
+model = "critic"
+enabled = true
+
+[[models]]
+name = "mock-verifier"
+kind = "mock"
+model = "verifier"
+enabled = true
+
+[[models]]
+name = "mock-synth"
+kind = "mock"
+model = "synthesizer"
+enabled = true
+
+# Example real provider. Enable only after setting the key and a valid model name.
+[[models]]
+name = "openai-main"
+kind = "openai_compatible"
+base_url = "https://api.openai.com/v1"
+api_key_env = "OPENAI_API_KEY"
+model = "REPLACE_WITH_MODEL"
+enabled = false

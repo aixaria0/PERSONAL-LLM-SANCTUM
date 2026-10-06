@@ -1,0 +1,88 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DEBUG_BIN="$ROOT/target/debug/personal-llm-sanctum"
+RELEASE_BIN="$ROOT/target/release/personal-llm-sanctum"
+PIDFILE="$ROOT/data/sanctum.pid"
+LOGFILE="$ROOT/data/sanctum.log"
+mkdir -p "$ROOT/data"
+
+build_debug() {
+  cd "$ROOT"
+  cargo build
+}
+
+build_release() {
+  cd "$ROOT"
+  CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}" cargo build --release
+}
+
+is_running() {
+  [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+}
+
+start_bin() {
+  local bin="$1"
+  if is_running; then
+    echo "SANCTUM already running (pid $(cat "$PIDFILE"))"
+    exit 0
+  fi
+  cd "$ROOT"
+  nohup "$bin" >>"$LOGFILE" 2>&1 &
+  echo $! > "$PIDFILE"
+  sleep 1
+  if is_running; then
+    echo "SANCTUM online: http://127.0.0.1:8787"
+  else
+    echo "SANCTUM failed to start; inspect $LOGFILE" >&2
+    exit 1
+  fi
+}
+
+case "${1:-status}" in
+  build)
+    build_debug
+    ;;
+  build-release)
+    build_release
+    ;;
+  start)
+    [ -x "$DEBUG_BIN" ] || build_debug
+    start_bin "$DEBUG_BIN"
+    ;;
+  start-release)
+    [ -x "$RELEASE_BIN" ] || build_release
+    start_bin "$RELEASE_BIN"
+    ;;
+  stop)
+    if is_running; then
+      kill "$(cat "$PIDFILE")"
+      rm -f "$PIDFILE"
+      echo "SANCTUM stopped"
+    else
+      rm -f "$PIDFILE"
+      echo "SANCTUM is not running"
+    fi
+    ;;
+  status)
+    if curl -fsS http://127.0.0.1:8787/health >/dev/null 2>&1; then
+      echo "SANCTUM ONLINE · http://127.0.0.1:8787"
+      curl -fsS http://127.0.0.1:8787/health
+      echo
+    else
+      echo "SANCTUM OFFLINE"
+      exit 1
+    fi
+    ;;
+  logs)
+    tail -n 80 "$LOGFILE"
+    ;;
+  dev)
+    cd "$ROOT"
+    cargo run
+    ;;
+  *)
+    echo "usage: $0 {build|build-release|start|start-release|stop|status|logs|dev}" >&2
+    exit 2
+    ;;
+esac

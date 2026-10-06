@@ -1,0 +1,9 @@
+{
+  "name": "Personal LLM Sanctum",
+  "short_name": "SANCTUM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "description": "Local-first adaptive multi-LLM command center"
+}
